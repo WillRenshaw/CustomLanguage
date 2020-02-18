@@ -1,0 +1,22 @@
+C:\Users\Will\Desktop\CustomLanguage\CustomLanguage\bin\Debug\netcoreapp3.1\CustomLanguage.exe
+C:\Users\Will\Desktop\CustomLanguage\CustomLanguage\bin\Debug\netcoreapp3.1\CustomLanguage.deps.json
+C:\Users\Will\Desktop\CustomLanguage\CustomLanguage\bin\Debug\netcoreapp3.1\CustomLanguage.runtimeconfig.json
+C:\Users\Will\Desktop\CustomLanguage\CustomLanguage\bin\Debug\netcoreapp3.1\CustomLanguage.runtimeconfig.dev.json
+C:\Users\Will\Desktop\CustomLanguage\CustomLanguage\bin\Debug\netcoreapp3.1\CustomLanguage.dll
+C:\Users\Will\Desktop\CustomLanguage\CustomLanguage\bin\Debug\netcoreapp3.1\CustomLanguage.pdb
+C:\Users\Will\Desktop\CustomLanguage\CustomLanguage\obj\Debug\netcoreapp3.1\CustomLanguage.csprojAssemblyReference.cache
+C:\Users\Will\Desktop\CustomLanguage\CustomLanguage\obj\Debug\netcoreapp3.1\CustomLanguage.AssemblyInfoInputs.cache
+C:\Users\Will\Desktop\CustomLanguage\CustomLanguage\obj\Debug\netcoreapp3.1\CustomLanguage.AssemblyInfo.cs
+C:\Users\Will\Desktop\CustomLanguage\CustomLanguage\obj\Debug\netcoreapp3.1\CustomLanguage.dll
+C:\Users\Will\Desktop\CustomLanguage\CustomLanguage\obj\Debug\netcoreapp3.1\CustomLanguage.pdb
+C:\Users\Will\OneDrive - University of Leeds\CustomLanguage\CustomLanguage\bin\Debug\netcoreapp3.1\CustomLanguage.exe
+C:\Users\Will\OneDrive - University of Leeds\CustomLanguage\CustomLanguage\bin\Debug\netcoreapp3.1\CustomLanguage.deps.json
+C:\Users\Will\OneDrive - University of Leeds\CustomLanguage\CustomLanguage\bin\Debug\netcoreapp3.1\CustomLanguage.runtimeconfig.json
+C:\Users\Will\OneDrive - University of Leeds\CustomLanguage\CustomLanguage\bin\Debug\netcoreapp3.1\CustomLanguage.runtimeconfig.dev.json
+C:\Users\Will\OneDrive - University of Leeds\CustomLanguage\CustomLanguage\bin\Debug\netcoreapp3.1\CustomLanguage.dll
+C:\Users\Will\OneDrive - University of Leeds\CustomLanguage\CustomLanguage\bin\Debug\netcoreapp3.1\CustomLanguage.pdb
+C:\Users\Will\OneDrive - University of Leeds\CustomLanguage\CustomLanguage\obj\Debug\netcoreapp3.1\CustomLanguage.csprojAssemblyReference.cache
+C:\Users\Will\OneDrive - University of Leeds\CustomLanguage\CustomLanguage\obj\Debug\netcoreapp3.1\CustomLanguage.AssemblyInfoInputs.cache
+C:\Users\Will\OneDrive - University of Leeds\CustomLanguage\CustomLanguage\obj\Debug\netcoreapp3.1\CustomLanguage.AssemblyInfo.cs
+C:\Users\Will\OneDrive - University of Leeds\CustomLanguage\CustomLanguage\obj\Debug\netcoreapp3.1\CustomLanguage.dll
+C:\Users\Will\OneDrive - University of Leeds\CustomLanguage\CustomLanguage\obj\Debug\netcoreapp3.1\CustomLanguage.pdb
