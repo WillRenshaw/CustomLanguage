@@ -1,9 +1,10 @@
-a = 1
-b = 1
+S& = 1
+Sign = 1
 
-i = 0
+testArray[0] = 1;
+testArray[1] = 6;
+testArray[2] = 8;
 
-while(i<10)
-{
-	i = i+1
+if(testArray[1] > 5){
+c = 1
 }

@@ -11,8 +11,14 @@ namespace CustomLanguage
         private Dictionary<string, float> variables;
         private bool ifStatementMet;
 
+        private readonly Dictionary<string, float> startingVariables = new Dictionary<string, float>()
+        {
+            {"pi", 3.14159f},
+            {"e", 2.71828f}
+        };
 
         private const char arrayDelimiter = '$';
+        private readonly string[] reservedNames = { "if", "else", "elif", "while", "Sin", "Asin", "Sign", "Sqrt", "Log", };
 
         private readonly Regex bracketRegex = new Regex(@"
             \(                    # Match (
@@ -24,39 +30,74 @@ namespace CustomLanguage
             (?(Level)(?!))        # zero-width negative lookahead assertion
             \)                    # Match )", RegexOptions.IgnorePatternWhitespace);
 
+        private readonly Regex squareBracketRegex = new Regex(@"\[(.*?)\]");
+        private readonly Regex variableNameRegex = new Regex(@"^[\d_]*[a-zA-Z][a-zA-Z\d_]*$");
+        private readonly Regex arrayNameRegex = new Regex(@"^[\d_]*[a-zA-Z][a-zA-Z\d_\$]*$");
 
         public Interpreter(string rawCode)
         {
+            //Remove all spaces and tabs
             rawCode = rawCode.Replace(" ", string.Empty);
             rawCode = rawCode.Replace("\t", string.Empty);
+
+            //Ensure all curly braces are on their own line
             rawCode = rawCode.Replace("{", "\n{\n");
             rawCode = rawCode.Replace("}", "\n}\n");
+
+            //Split into lines array based on carriage returns and semi colons
             lines = Regex.Split(rawCode, "\r\n|\r|\n|;");
 
-            variables = new Dictionary<string, float>();
             //Add Starting Variables
-            SetVariable("Pi", 3.14159f);
-            SetVariable("e", 2.71828f);
+            variables = startingVariables;
+
 
             ifStatementMet = false;
+            //Start interpreting
             InterpretLines(0, lines.Length - 1);
         }
 
-        public void SetVariable(string name, float value)
+        public void SetVariable(string name, float value, bool arrayItem = false)
         {
-            if (!variables.ContainsKey(name))
+            bool nameProblem = false;
+
+            //Check characters (only allow a-z,A-Z, 0-9 and _
+            if (!variableNameRegex.Match(name).Success && !arrayItem)
+            {
+                nameProblem = true;
+                OutputErrorMessage("Variable name can only contain 'a-z', 'A-Z', '0-9' and '_'. Name " + name + " is invalid.");
+            }
+            else if (!arrayNameRegex.Match(name).Success && arrayItem) //If an array item also allow $, but not as first letter (i.e. must have a name)
+            {
+                nameProblem = true;
+                OutputErrorMessage("array name can only contain 'a-z', 'A-Z', '0-9' and '_'. Name " + name + " is invalid.");
+            }
+
+            //Need to check against reserved words  
+            foreach (string reservedWord in reservedNames)
+            {
+                if (Regex.Match(name, reservedWord).Success)
+                {
+                    nameProblem = true;
+                    OutputErrorMessage("Variable name cannot contain the reserved word " + reservedWord);
+                }
+            }
+
+            //Add new variable if it doesn't exist
+            if (!variables.ContainsKey(name) && !nameProblem)
             {
                 variables.Add(name, value);
-                Console.WriteLine("Added New Variable {0} with value {1}", name, value.ToString());
+                OutputMessage("Added New Variable " + name + " with value " + value.ToString());
             }
-            else if (variables.ContainsKey(name))
+
+            //If it does exist then update it's value
+            else if (variables.ContainsKey(name) && !nameProblem)
             {
                 variables[name] = value;
-                Console.WriteLine("Updated Variable {0} with value {1}", name, value.ToString());
+                OutputMessage("Updated Variable " + name + " with new value " + value.ToString());
             }
         }
 
-        public float GetVariable (string name)
+        public float GetVariable(string name)
         {
             if (variables.ContainsKey(name))
             {
@@ -64,6 +105,7 @@ namespace CustomLanguage
             }
             else
             {
+                OutputErrorMessage("Error, could not find variable with name " + name);
                 return 0;
             }
         }
@@ -77,7 +119,7 @@ namespace CustomLanguage
             foreach (float val in values)
             {
                 string itemName = name + arrayDelimiter + i.ToString();
-                SetVariable(itemName, val);
+                SetVariable(itemName, val, true);
             }
         }
 
@@ -87,7 +129,7 @@ namespace CustomLanguage
         public void UpdateArray(string name, int index, float value)
         {
             string itemName = name + arrayDelimiter + index.ToString();
-            SetVariable(itemName, value);
+            SetVariable(itemName, value, true);
         }
 
         /// <summary>
@@ -101,7 +143,7 @@ namespace CustomLanguage
         private void InterpretLines(int currentLineIndex, int endIndex)
         {
             string currentLine = lines[currentLineIndex];
-            
+
             string[] sections = Regex.Split(currentLine, @"((?<!=|!)=(?!=)|{|})");
 
             foreach (string section in sections)
@@ -130,7 +172,7 @@ namespace CustomLanguage
                 }
                 else if (section.StartsWith("elif"))
                 {
-                    
+
                     if (!ifStatementMet)
                     {
                         bool statementTruth = HandleConditional(currentLine);
@@ -160,7 +202,7 @@ namespace CustomLanguage
                 else if (section.StartsWith("while"))
                 {
                     int loopEndingLine = FindEndIndex(currentLineIndex);
-                    
+
                     while (HandleConditional(currentLine))
                     {
                         InterpretLines(currentLineIndex + 1, loopEndingLine);
@@ -177,13 +219,27 @@ namespace CustomLanguage
         private void HandleAssignment(string line)
         {
             string variableName = line.Split('=')[0];
-            
+
             string variableValue = line.Split('=')[1];
             float finalValue;
 
             finalValue = HandleMathsExpresison(variableValue);
 
-            SetVariable(variableName, finalValue);
+            //Check if array
+            if (squareBracketRegex.Match(variableName).Success)
+            {
+                string brackets = squareBracketRegex.Match(variableName).Value;
+                string arrayName = variableName.Replace(brackets, "");
+                int index = (int)HandleMathsExpresison(brackets.Substring(1, brackets.Length - 2));
+                UpdateArray(arrayName, index, finalValue);
+            }
+            else
+            {
+                //Not an array, therefore assign as normal for variable
+                SetVariable(variableName, finalValue);
+            }
+
+
         }
 
         private float HandleMathsExpresison(string expression)
@@ -198,6 +254,13 @@ namespace CustomLanguage
                 //This goes and recursively solves brackets
                 expression = expression.Replace(c.Value, HandleMathsExpresison(c.Value.Substring(1, c.Value.Length - 2)).ToString());
             }
+            if (squareBracketRegex.Match(expression).Success) //If an array reference is found, replace it with the correct array index value
+            {
+                string brackets = squareBracketRegex.Match(expression).Value;
+
+                int index = (int)HandleMathsExpresison(brackets.Substring(1, brackets.Length - 2));
+                expression = expression.Replace(brackets, arrayDelimiter + index.ToString());
+            }
 
             /////////////////////////////////////////////
             //Break down into tokens based on basic operators
@@ -206,9 +269,16 @@ namespace CustomLanguage
 
             for (int i = 0; i < parts.Length; i++)
             {
-                if (variables.ContainsKey(parts[i]))
+                if (variables.ContainsKey(parts[i])) //If a variable is found, replace it with the variables value
                 {
                     parts[i] = variables[parts[i]].ToString();
+                }
+                else if (squareBracketRegex.Match(parts[i]).Success) //If an array reference is found, replace it with the correct array index value
+                {
+                    string brackets = squareBracketRegex.Match(parts[i]).Value;
+                    string arrayName = parts[i].Replace(brackets, "");
+                    int index = (int)HandleMathsExpresison(brackets.Substring(1, brackets.Length - 2));
+                    parts[i] = GetArrayItem(arrayName, index).ToString();
                 }
             }
             //////////////////////////////////////////////////////////////////////////
@@ -257,22 +327,15 @@ namespace CustomLanguage
                 {
 
                     equationTokens[i] = MathF.Pow(float.Parse(equationTokens[i - 1]), float.Parse(equationTokens[i + 1])).ToString();
-                    var foos = new List<string>(equationTokens);
-                    foos.RemoveAt(i - 1);
-                    foos.RemoveAt(i);
-                    equationTokens = foos.ToArray();
+                    equationTokens = RemoveItemsFromArray(equationTokens, new int[] { i - 1, i });
                 }
             }
             for (int i = 0; i < equationTokens.Length; i++)
             {
                 if (equationTokens[i] == "*")
                 {
-
                     equationTokens[i] = (float.Parse(equationTokens[i - 1]) * float.Parse(equationTokens[i + 1])).ToString();
-                    var foos = new List<string>(equationTokens);
-                    foos.RemoveAt(i - 1);
-                    foos.RemoveAt(i);
-                    equationTokens = foos.ToArray();
+                    equationTokens = RemoveItemsFromArray(equationTokens, new int[] { i - 1, i });
                 }
             }
             for (int i = 0; i < equationTokens.Length; i++)
@@ -281,17 +344,13 @@ namespace CustomLanguage
                 {
 
                     equationTokens[i] = (float.Parse(equationTokens[i - 1]) / float.Parse(equationTokens[i + 1])).ToString();
-                    var foos = new List<string>(equationTokens);
-                    foos.RemoveAt(i - 1);
-                    foos.RemoveAt(i);
-                    equationTokens = foos.ToArray();
+                    equationTokens = RemoveItemsFromArray(equationTokens, new int[] { i - 1, i });
                 }
             }
             for (int i = 0; i < equationTokens.Length; i++)
             {
                 if (equationTokens[i] == "+")
                 {
-
                     equationTokens[i] = (float.Parse(equationTokens[i - 1]) + float.Parse(equationTokens[i + 1])).ToString();
                     equationTokens = RemoveItemsFromArray(equationTokens, new int[] { i - 1, i });
                 }
@@ -302,13 +361,9 @@ namespace CustomLanguage
                 {
 
                     equationTokens[i] = (float.Parse(equationTokens[i - 1]) - float.Parse(equationTokens[i + 1])).ToString();
-                    var foos = new List<string>(equationTokens);
-                    foos.RemoveAt(i - 1);
-                    foos.RemoveAt(i);
-                    equationTokens = foos.ToArray();
+                    equationTokens = RemoveItemsFromArray(equationTokens, new int[] { i - 1, i });
                 }
             }
-
             return float.Parse(equationTokens[0]);
         }
 
@@ -321,7 +376,7 @@ namespace CustomLanguage
             condition = condition.Replace(" ", string.Empty);
             //First we need to split for 'or' and 'and' operators
             string[] conditions = Regex.Split(condition, @"(&&|\|\|)");
-            for (int i = 0; i < conditions.Length; i = i+2)
+            for (int i = 0; i < conditions.Length; i = i + 2)
             {
                 conditions[i] = Comparison(conditions[i]).ToString();
             }
@@ -331,10 +386,7 @@ namespace CustomLanguage
                 {
 
                     conditions[i] = (bool.Parse(conditions[i - 1]) && bool.Parse(conditions[i + 1])).ToString();
-                    var foos = new List<string>(conditions);
-                    foos.RemoveAt(i - 1);
-                    foos.RemoveAt(i);
-                    conditions = foos.ToArray();
+                    conditions = RemoveItemsFromArray(conditions, new int[] { i - 1, i });
                 }
 
             }
@@ -344,10 +396,7 @@ namespace CustomLanguage
                 {
 
                     conditions[i] = (bool.Parse(conditions[i - 1]) || bool.Parse(conditions[i + 1])).ToString();
-                    var foos = new List<string>(conditions);
-                    foos.RemoveAt(i - 1);
-                    foos.RemoveAt(i);
-                    conditions = foos.ToArray();
+                    conditions = RemoveItemsFromArray(conditions, new int[] { i - 1, i });
                 }
 
             }
@@ -414,6 +463,15 @@ namespace CustomLanguage
                 list.RemoveAt(indexes[i]);
             }
             return list.ToArray();
+        }
+
+        private void OutputMessage(string message)
+        {
+            Console.WriteLine(message);
+        }
+        private void OutputErrorMessage(string message)
+        {
+            Console.WriteLine(message);
         }
     }
 }
